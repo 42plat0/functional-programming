@@ -129,10 +129,30 @@ module ExerciseSet2  where
   --6th
   -- util, data
   toFloat x = fromRational x :: Float
-  shopBasket = [("obuolys", toFloat 0.5), ("obuolys", toFloat 1.5), ("bananas", toFloat 10), ("bananas", toFloat 10)]
+  shopBasket = [("obuolys", toFloat 0.5), ("obuolys", toFloat 1.5), ("bananas", toFloat 10), ("bananas", toFloat 10), ("asdf", toFloat 123)]
   --6.1 itemTotal
   itemTotal :: [(String, Float)] -> [(String, Float)]
-  itemTotal = Map.toList . Map.fromListWith (+)
+  itemTotal xs = getItemTotals xs itemNameSet
+    where
+      itemNameSet = nub (getItemNames xs) 
+   
+  getItemNames :: [(String, Float)] -> [String]
+  getItemNames [] = []
+  getItemNames ((item, price): xs) = item : getItemNames xs
+
+  setOfItemNames :: [(String, Float)] -> [String]
+  setOfItemNames xs = nub (getItemNames xs)
+
+  sumForItem :: String -> [(String,Float)] -> Float
+  sumForItem _ [] = toFloat 0
+  sumForItem  x ((item, price):ys)
+    | x == item = price + sumForItem x ys
+    | otherwise = sumForItem x ys
+
+  getItemTotals :: [(String, Float)] -> [String] -> [(String, Float)]
+  getItemTotals _ [] = []
+  getItemTotals xs (y:ys) = (y, sumForItem y xs) : getItemTotals xs ys
+
 
   -- 6.2 item discount
   itemDiscount :: String -> Integer -> [(String,Float)] -> [(String,Float)]
