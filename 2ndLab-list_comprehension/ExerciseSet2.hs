@@ -1,9 +1,7 @@
 module ExerciseSet2  where
   import Test.QuickCheck
-  import Data.List -- for isPrefixOf
+  import Data.List
   import Data.Char(isDigit, toUpper)
-  import Data.Ord
-  import qualified Data.Map.Strict as Map
 
   myFilter :: (a -> Bool) -> [a] -> [a]
   myFilter p xs = [x | x <- xs, p x]
@@ -78,7 +76,7 @@ module ExerciseSet2  where
     | length (x:xs) /= length (y:ys) = False
     | otherwise = checkPermutations valSet firstTuple secondTuple
     where
-      valSet = nub (nub (x:xs) ++ nub(y:ys)) 
+      valSet = nub (x:xs ++ y:ys) 
       firstTuple = listOfElemOccurenceTuples (x:xs)
       secondTuple = listOfElemOccurenceTuples (y:ys)
 
