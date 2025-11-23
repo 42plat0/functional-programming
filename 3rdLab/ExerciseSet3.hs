@@ -163,7 +163,7 @@ module ExerciseSet3 where
   iter :: Int -> (a -> a) -> a -> a
   iter n func x = compose (iterRep n func) x
 
-  -- usage: compose (iterRep [N-times] [FUNCTION]) [VALUE]
+  -- usage: iter [N-times] [FUNCTION] [VALUE]
   incrementedBy3nTimes n val = iter n (+3) val
   -- ghci> incrementedBy3nTimes 2 1
   -- 7
