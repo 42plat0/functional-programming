@@ -1,7 +1,7 @@
 module ExerciseSet3 where
   import Test.QuickCheck
+  import Test.QuickCheck.Function  -- for Fun wrapper
   
-  -- TODO test -- not tested
   -- 1st overlaps
   -- Let's say PosXY defines center of shape in 2d plane
   data PosXY = PosXY Int Int 
@@ -55,18 +55,28 @@ module ExerciseSet3 where
   --2nd - any & and
   -- FILTER
   any0 :: (a->Bool) -> [a] -> Bool
-  any0 f [] = error "Provide list with members"
   any0 f list = length (filter f list) > 0
 
   all0 :: (a->Bool) -> [a] -> Bool
-  all0 f [] = error "Provide list with members"
   all0 f list = length (filter f list) == length list 
 
   -- MAP+FOLDR
-  -- TODO
-  --
+  any1 :: (a->Bool) -> [a] -> Bool
+  any1 f = foldr (||) False . map f
+
+  all1 :: (a->Bool) -> [a] -> Bool
+  all1 f = foldr (&&) True . map f
+
+  --prop for all any any
+  prop_any :: Fun Int Bool -> [Int] -> Bool
+  prop_any (Fun _ fun) list =
+    any0 fun list == any1 fun list
+
+  prop_all :: Fun Int Bool -> [Int] -> Bool
+  prop_all (Fun _ fun) list =
+    all0 fun list == all1 fun list
+
   -- 3rd unzip with foldr
-    
   unzip0 :: [(a, b)] -> ([a], [b])
   unzip0 list = foldr (\(x, y) (xs,ys) -> (x:xs, y:ys)) ([], []) list
 
@@ -105,7 +115,7 @@ module ExerciseSet3 where
   --
   -- 6th total
   --
-  --  nuo 0 iki n kartu sumuoti funkcijos rezultatus
+  -- nuo 0 iki n kartu sumuoti funkcijos rezultatus
   -- tai funkcija total (pridekViena) 9 = 0 pridekViena + 1 pridekViena + 2 pridekViena ... n pridekViena
   -- tai jei sufoldintume lista gautume rezultata ez
   -- o gaut lista gallim [0..n]
@@ -123,7 +133,7 @@ module ExerciseSet3 where
 
 -- Unfinished foldr implementation
 --  totalG1 :: (Integer -> Integer) -> Integer -> Integer
---  totalG1 (f) limit = foldr f 0 [0..limit]
+ -- totalG1 f limit = foldr f 0 [0..limit]
 
   -- 7th 
   {- 
@@ -134,15 +144,49 @@ module ExerciseSet3 where
     f and then folding this list. For the cases when n ≤ 0, the Prelude function
     id, defined as id x = x, should be returned.
    -}
-  
-  -- 8th 
-  {-
-  which returns all the ways that a list can be split into two consecutive ones,
-  e.g.,
-  splits "Spy" == [("","Spy"),("S","py"),("Sp","y"),("Spy","")]
-  -}
-  splits :: [a] -> [([a],[a])]
-  splits [] = [([], [])]
-  
+  iterRec :: Int -> (a -> a) -> (a -> a)
+  iterRec n f
+    | n > 0 = (f . iterRec (n-1) f)
+    | otherwise = id 
+
+  -- with replicate and folding
+  iterRep :: Int -> (a -> a) -> [a -> a]
+  iterRep n f = replicate n f
+
+  -- id is the identity element of function composition
+  -- f . id = f
+  -- id . f = f
+  -- so a way to return a function
+  compose :: [a -> a] -> a -> a
+  compose funcs v = foldl (.) id funcs $ v
+
+  iter :: Int -> (a -> a) -> a -> a
+  iter n func x = compose (iterRep n func) x
+
+  -- usage: compose (iterRep [N-times] [FUNCTION]) [VALUE]
+  incrementedBy3nTimes n val = iter n (+3) val
+  -- ghci> incrementedBy3nTimes 2 1
+  -- 7
+
+  -- using suggested quickCheck Function specific function
+  -- to handle function failing and print counter example
+  -- prop for both iter versions
+  prop_iter :: Int -> Fun Int Int -> Int -> Bool
+  prop_iter n (Fun _ func) x = 
+    (iterRec n func) x == (iter n func) x
+
+
+  -- 8th splits
+  splits :: [a] -> [([a], [a])]
+  splits list = splitsAccumulator list [] 0 
+
+  splitsAccumulator :: [a] -> [([a], [a])] -> Int -> [([a], [a])]
+  splitsAccumulator list acc idx
+    | splitSndLength > 0 = splitsAccumulator list (acc ++ [splitVal]) (idx+1)
+    | otherwise = acc ++ [splitVal]
+    where
+      splitVal = splitAt idx list
+      splitSndLength = length $ snd $ splitVal
+
 
 
