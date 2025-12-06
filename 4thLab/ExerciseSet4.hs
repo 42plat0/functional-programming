@@ -21,10 +21,13 @@ module ExerciseSet4 where
   depth (Gnode trees) = 1 + maximum (map depth trees) 
 
   -- whether an element occurs in a GTree
-  isInTree :: Eq a => GTree a -> a -> Bool
-  isInTree (Leaf val) x = val == x
-  isInTree (Gnode trees) x = foldr (||) False (map (\subtree -> isInTree subtree x) trees)
---  isInTree (Gnode (tree:trees)) x
+  inTree :: Eq a => GTree a -> a -> Bool
+  inTree (Leaf val) x = val == x
+  inTree (Gnode trees) x = foldr (||) False $ map (\subtree -> inTree subtree x) trees
 
-  t2 = Gnode [Leaf 'a', Leaf 'b', Leaf 'c']
+  t2 = Gnode [Leaf 3, Leaf 4, Leaf 5]
   -- mapTree
+  mapTree :: (a -> b) -> GTree a -> GTree b
+  mapTree f (Leaf a) = Leaf (f a)
+  mapTree f (Gnode trees) = Gnode (map (\subtree -> mapTree f subtree) trees)
+
