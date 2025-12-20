@@ -1,5 +1,6 @@
 module ExerciseSet4 where
   import Test.QuickCheck
+  import Data.List
 
   a = [1, 2, 3]
   b = [4, 3, 2, 1]
@@ -90,4 +91,77 @@ module ExerciseSet4 where
   test3 = eval val3 expr3
 
 
-  -- 3rd 
+  -- 3rd  regular expressions
+  --
+  -- splits
+  splits :: [a] -> [([a], [a])]
+  splits list = splitsAccumulator list [] 0
+
+  splitsAccumulator :: [a] -> [([a], [a])] -> Int -> [([a], [a])]
+  splitsAccumulator list acc idx
+    | splitSndLength > 0 = splitsAccumulator list (acc ++ [splitVal]) (idx+1)
+    | otherwise = acc ++ [splitVal]
+    where
+      splitVal = splitAt idx list
+      splitSndLength = length $ snd $ splitVal
+  --
+  --
+  type RegExp = String -> Bool
+
+  epsilon :: RegExp
+  epsilon = (=="")
+
+  char :: Char -> RegExp
+  char ch = (==[ch])
+
+  -- matches one of patterns
+  (|||) :: RegExp -> RegExp -> RegExp
+  (|||) e1 e2 = \x -> e1 x || e2 x
+
+  -- matches first and second part of string to patterns
+  concatRegExp :: RegExp -> RegExp -> RegExp
+  concatRegExp e1 e2 = \x -> or [e1 y && e2 z | (y, z) <- splits x]
+
+  -- matches string that is empty or of N occurences
+  star :: RegExp -> RegExp
+  star p = epsilon ||| (concatRegExp p (star p))
+
+  -- matches zero or one occurences of pattern P
+  option :: RegExp -> RegExp
+  option p = epsilon ||| p
+
+  -- matches one or more occurences of pattern P
+  plus :: RegExp -> RegExp
+  plus p = p ||| concatRegExp p (plus p)
+
+  -- 4th Result
+  data MyResult a = OK a | Error String
+    deriving Show
+
+  isEven :: Integral a => a -> MyResult Bool
+  isEven num 
+    | num <= 0 = Error "Don't do negative numbers or zero"
+    | otherwise = OK ((mod num 2) == 0)
+
+  isMyFavoriteNumber :: Integral a => a -> MyResult Bool
+  isMyFavoriteNumber num
+    | num == 42 = OK True
+    | otherwise = Error "Not my favorite number"
+  
+  isOK :: Bool -> MyResult String
+  isOK b
+    | b == True = OK "Good"
+    | otherwise = Error "Not Good"
+
+  bindMyResult :: MyResult a -> (a -> MyResult b) -> MyResult b
+  bindMyResult (Error msg) _ = Error msg 
+  bindMyResult (OK val) f = f val
+
+  composeMyResult :: (a -> MyResult b) -> (b -> MyResult c) -> (a -> MyResult c)
+  composeMyResult f g newFuncArg = bindMyResult (f newFuncArg) g
+
+  testCompose = composeMyResult isEven isOK
+
+  tc1 = testCompose 13
+  tc2 = testCompose 14
+--  composeMyResult f1 f2 = 
