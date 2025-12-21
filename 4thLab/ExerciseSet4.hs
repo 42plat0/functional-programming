@@ -138,11 +138,6 @@ module ExerciseSet4 where
   data MyResult a = OK a | Error String
     deriving Show
 
-  isEven :: Integral a => a -> MyResult Bool
-  isEven num 
-    | num <= 0 = Error "Don't do negative numbers or zero"
-    | otherwise = OK ((mod num 2) == 0)
-
   isMyFavoriteNumber :: Integral a => a -> MyResult Bool
   isMyFavoriteNumber num
     | num == 42 = OK True
@@ -153,6 +148,7 @@ module ExerciseSet4 where
     | b == True = OK "Good"
     | otherwise = Error "Not Good"
 
+  -- unwraps MyResult like a Monad
   bindMyResult :: MyResult a -> (a -> MyResult b) -> MyResult b
   bindMyResult (Error msg) _ = Error msg 
   bindMyResult (OK val) f = f val
@@ -160,8 +156,63 @@ module ExerciseSet4 where
   composeMyResult :: (a -> MyResult b) -> (b -> MyResult c) -> (a -> MyResult c)
   composeMyResult f g newFuncArg = bindMyResult (f newFuncArg) g
 
-  testCompose = composeMyResult isEven isOK
+  testCompose = composeMyResult isMyFavoriteNumber isOK
 
   tc1 = testCompose 13
   tc2 = testCompose 14
---  composeMyResult f1 f2 = 
+--
+-- 5th Goldbach conjecture
+  primes :: [Integer]
+  primes = sieve [2..]
+
+  sieve (x:xs) =
+    x : sieve [y | y <- xs, y `mod` x > 0]
+
+  goldbach :: Integer -> Bool
+  goldbach n = length allEvens == length primePairsForEvens
+    where 
+      allEvens = getEven [4..n]
+      primePairsForEvens = [ findPairForTarget en (getPrimeSums [] (getNumPrimes en)) | en <- allEvens ]
+
+  isEven num = num `mod` 2 == 0
+
+  getEven :: [Integer] -> [Integer]
+  getEven [] = []
+  getEven nums = filter isEven nums
+
+  getNumPrimes :: Integer -> [Integer]
+  getNumPrimes n = takeWhile (<n) primes
+
+  getPrimeSums :: [(Integer, Integer)] -> [Integer] -> [(Integer, Integer)]
+  getPrimeSums acc [] = acc
+  getPrimeSums acc (x:xs) = getPrimeSums (acc ++ map (\y -> (y, x)) (x:xs)) xs
+
+  findPairForTarget :: Integer -> [(Integer, Integer)] -> (Integer, Integer)
+  findPairForTarget _ [] = (0, 0)  -- No pair found
+  findPairForTarget target ((x, y):pairs)
+    | x + y == target = (x, y)
+    | otherwise       = findPairForTarget target pairs
+
+  -- 6th Stream
+  data Stream a = Cons a (Stream a)
+
+  ones :: Stream Int
+  ones = Cons 1 (ones)
+
+  -- to list
+  streamToList :: Stream a -> [a]
+  streamToList (Cons x xs) = x : streamToList xs
+
+  -- iterate with function
+  streamIterate :: (a -> a) -> a -> Stream a
+  streamIterate f x = Cons x (streamIterate f (f x))
+
+  -- interleaving of stream elements
+  streamInterleave :: Stream a -> Stream a -> Stream a
+  streamInterleave (Cons x xs) ys = Cons x (streamInterleave ys xs)
+
+  evens = streamIterate (+2) 0
+  odds = streamIterate (+2) 1
+  interleaved = take 100 (streamToList (streamInterleave evens odds))
+
+--
